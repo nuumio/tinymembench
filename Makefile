@@ -1,4 +1,3 @@
-
 .PHONY : all clean
 
 NAME = tinymembench
