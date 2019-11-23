@@ -127,6 +127,52 @@ asm_function aligned_block_copy_ldpstp_q_pf64_l1keep_aarch64
     ret
 .endfunc
 
+asm_function aligned_block_load_ldp_x_aarch64
+0:
+    prfm        pldl1keep, [SRC, #(PREFETCH_DISTANCE)]
+    ldp         x3,  x4, [SRC, #(0 * 16)]
+    ldp         x5,  x6, [SRC, #(1 * 16)]
+    ldp         x7,  x8, [SRC, #(2 * 16)]
+    ldp         x9, x10, [SRC, #(3 * 16)]
+    add         SRC, SRC, #64
+    subs        SIZE, SIZE, #64
+    bgt         0b
+    ret
+.endfunc
+
+asm_function aligned_block_fill_ldp_q_aarch64
+0:
+    prfm        pldl1keep, [SRC, #(PREFETCH_DISTANCE)]
+    ldp         q0,  q1, [SRC, #(0 * 32)]
+    ldp         q2,  q3, [SRC, #(1 * 32)]
+    add         SRC, SRC, #64
+    subs        SIZE, SIZE, #64
+    bgt         0b
+    ret
+.endfunc
+
+asm_function aligned_block_fill_ldnp_x_aarch64
+0:
+    ldnp        x3,  x4, [SRC, #(0 * 16)]
+    ldnp        x5,  x6, [SRC, #(1 * 16)]
+    ldnp        x7,  x8, [SRC, #(2 * 16)]
+    ldnp        x9, x10, [SRC, #(3 * 16)]
+    add         SRC, SRC, #64
+    subs        SIZE, SIZE, #64
+    bgt         0b
+    ret
+.endfunc
+
+asm_function aligned_block_fill_ldnp_q_aarch64
+0:
+    ldnp        q0,  q1, [SRC, #(0 * 32)]
+    ldnp        q2,  q3, [SRC, #(1 * 32)]
+    add         SRC, SRC, #64
+    subs        SIZE, SIZE, #64
+    bgt         0b
+    ret
+.endfunc
+
 asm_function aligned_block_fill_stp_x_aarch64
 0:
     stp         x3,  x4, [DST, #(0 * 16)]
