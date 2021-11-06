@@ -26,6 +26,9 @@
 
 #include <stdint.h>
 
+void parse_args(int argc, char **argv,
+                int *minrepeats, int *maxrepeats, int *mem_realloc,
+                int *latbench_repeats, int *latbench_count);
 double gettime(void);
 double fmin(double, double);
 

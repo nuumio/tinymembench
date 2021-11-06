@@ -517,14 +517,20 @@ int main(int argc, char **argv)
     fbsize = (fbsize / BLOCKSIZE) * BLOCKSIZE;
 #endif
 
+    parse_args(argc, argv, &minrepeats, &maxrepeats, &mem_realloc,
+               &latbench_repeats, &latbench_count);
+    if (minrepeats > maxrepeats) {
+        minrepeats = maxrepeats;
+    }
+
     printf("tinymembench v" VERSION " (simple benchmark for memory throughput and latency)\n");
     printf("\n");
     printf("CFLAGS: " CFLAGS "\n");
-    printf("bandwidth test min repeats: %d\n", minrepeats);
-    printf("bandwidth test max repeats: %d\n", maxrepeats);
-    printf("bandwidth test mem realloc: %s\n", mem_realloc ? "yes" : "no");
-    printf("      latency test repeats: %d\n", latbench_repeats);
-    printf("        latency test count: %d\n", latbench_count);
+    printf("bandwidth test min repeats (-b): %d\n", minrepeats);
+    printf("bandwidth test max repeats (-B): %d\n", maxrepeats);
+    printf("bandwidth test mem realloc (-%c): %s\n", mem_realloc ? 'm' : 'M', mem_realloc ? "yes     (-M for no realloc)" : "no      (-m for realloc)");
+    printf("      latency test repeats (-l): %d\n", latbench_repeats);
+    printf("        latency test count (-c): %d\n", latbench_count);
 
 
     poolbuf = alloc_four_nonaliased_buffers((void **)&srcbuf, bufsize,

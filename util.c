@@ -24,7 +24,11 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/time.h>
+#include <unistd.h>
+#include <errno.h>
+#include <limits.h>
 
 #include "util.h"
 
@@ -361,4 +365,104 @@ void *alloc_four_nonaliased_buffers(void **buf1_, int size1,
     }
 
     return buf;
+}
+
+void print_help_and_exit(int minrepeats, int maxrepeats, int mem_realloc,
+                int latbench_repeats, int latbench_count)
+{
+    printf("Usage: tinymembench [-h] [-b n] [-B n] [-r | -R] [-l n] [-c n]\n");
+    printf("\n");
+    printf(" -h    Print help and exit\n");
+    printf(" -b n  Bandwith tests' min repeats (default: %d)\n", minrepeats);
+    printf(" -B n  Bandwith tests' max repeats (default: %d)\n", maxrepeats);
+    printf(" -m    Reallocate memory in bandwidth tests%s\n", mem_realloc ? " (default)" : "");
+    printf(" -M    Don't reallocate memory in bandwith tests%s\n", mem_realloc ? "" : " (default)");
+    printf(" -l n  Latency tests' repeats (default: %d)\n", latbench_repeats);
+    printf(" -c n  Latency tests' count (default: %d)\n", latbench_count);
+    printf("\n");
+    printf("Bandwith tests' min repeats is capped to max repeats.\n");
+    printf("Max value for n in %d, but you probably don't want to\n", INT_MAX);
+    printf("use it unless you have an unlimited supply of coffee.\n");
+    exit(0);
+}
+
+static int parse_pos_int(char *str) {
+    long v;
+    errno = 0;
+    v = strtol(str, NULL, 0);
+    if (errno != 0 || v <= 0 || v > INT_MAX)
+    {
+        return -1;
+    }
+    return v;
+}
+
+void parse_args(int argc, char **argv,
+                int *minrepeats, int *maxrepeats, int *mem_realloc,
+                int *latbench_repeats, int *latbench_count)
+{
+    int minrepeats_def = *minrepeats;
+    int maxrepeats_def = *maxrepeats;
+    int mem_realloc_def = *mem_realloc;
+    int latbench_repeats_def = *latbench_repeats;
+    int latbench_count_def = *latbench_count;
+    int c;
+    while ((c = getopt(argc, argv, "hmMb:B:l:c:")) != -1) {
+        switch (c) {
+        case 'h':
+            print_help_and_exit(minrepeats_def, maxrepeats_def, mem_realloc_def,
+                                latbench_repeats_def, latbench_count_def);
+            break;
+        case 'm':
+            *mem_realloc = 1;
+            break;
+        case 'M':
+            *mem_realloc = 0;
+            break;
+        case 'b':
+            c = parse_pos_int(optarg);
+            if (c <= 0)
+            {
+                printf("Invalid bandwith tests min repeats arg: %s\n", optarg);
+                print_help_and_exit(minrepeats_def, maxrepeats_def, mem_realloc_def,
+                                    latbench_repeats_def, latbench_count_def);
+            }
+            *minrepeats = c;
+            break;
+        case 'B':
+            c = parse_pos_int(optarg);
+            if (c <= 0)
+            {
+                printf("Invalid bandwith tests max repeats arg: %s\n", optarg);
+                print_help_and_exit(minrepeats_def, maxrepeats_def, mem_realloc_def,
+                                    latbench_repeats_def, latbench_count_def);
+            }
+            *maxrepeats = c;
+            break;
+        case 'l':
+            c = parse_pos_int(optarg);
+            if (c <= 0)
+            {
+                printf("Invalid latency tests repeats arg: %s\n", optarg);
+                print_help_and_exit(minrepeats_def, maxrepeats_def, mem_realloc_def,
+                                    latbench_repeats_def, latbench_count_def);
+            }
+            *latbench_repeats = c;
+            break;
+        case 'c':
+            c = parse_pos_int(optarg);
+            if (c <= 0)
+            {
+                printf("Invalid latency tests count arg: %s\n", optarg);
+                print_help_and_exit(minrepeats_def, maxrepeats_def, mem_realloc_def,
+                                    latbench_repeats_def, latbench_count_def);
+            }
+            *latbench_count = c;
+            break;
+        default:
+            print_help_and_exit(minrepeats_def, maxrepeats_def, mem_realloc_def,
+                                latbench_repeats_def, latbench_count_def);
+            break;
+        }
+    }
 }
