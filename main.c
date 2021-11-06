@@ -496,7 +496,11 @@ int main(void)
 #endif
 
     printf("tinymembench v" VERSION " (simple benchmark for memory throughput and latency)\n");
+    printf("\n");
     printf("CFLAGS: " CFLAGS "\n");
+    printf("MINREPEATS: %d\n", MINREPEATS);
+    printf("MAXREPEATS: %d\n", MAXREPEATS);
+    printf("LATBENCH_COUNT: %d\n", LATBENCH_COUNT);
 
 
     poolbuf = alloc_four_nonaliased_buffers((void **)&srcbuf, bufsize,

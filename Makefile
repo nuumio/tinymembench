@@ -4,8 +4,16 @@ ifdef WINDIR
 	CC = gcc
 endif
 
+MINREPEATS ?= 3
+MAXREPEATS ?= 10
+LATBENCH_COUNT ?= 10000000
+
 tinymembench: main.c util.o util.h asm-opt.h version.h asm-opt.o x86-sse2.o arm-neon.o mips-32.o aarch64-asm.o
-	${CC} -O2 ${CFLAGS} "-DCFLAGS=\"${CFLAGS}\"" -o tinymembench main.c util.o asm-opt.o x86-sse2.o arm-neon.o mips-32.o aarch64-asm.o -lm
+	${CC} -O2 ${CFLAGS} "-DCFLAGS=\"${CFLAGS}\"" \
+		-DMINREPEATS=${MINREPEATS} \
+		-DMAXREPEATS=${MAXREPEATS} \
+		-DLATBENCH_COUNT=${LATBENCH_COUNT} \
+		-o tinymembench main.c util.o asm-opt.o x86-sse2.o arm-neon.o mips-32.o aarch64-asm.o -lm
 
 util.o: util.c util.h
 	${CC} -O2 ${CFLAGS} -c util.c
