@@ -40,16 +40,22 @@
 #include "asm-opt.h"
 #include "version.h"
 
-#define SIZE             (32 * 1024 * 1024)
-#define BLOCKSIZE        2048
+#define SIZE              (32 * 1024 * 1024)
+#define BLOCKSIZE         2048
 #ifndef MAXREPEATS
-# define MAXREPEATS      10
+# define MAXREPEATS       10
 #endif
 #ifndef MINREPEATS
-# define MINREPEATS      3
+# define MINREPEATS       3
+#endif
+#ifndef LATBENCH_REPEATS
+# define LATBENCH_REPEATS 10
 #endif
 #ifndef LATBENCH_COUNT
-# define LATBENCH_COUNT  10000000
+# define LATBENCH_COUNT   10000000
+#endif
+#ifndef MEM_REALLOC
+# define MEM_REALLOC      0
 #endif
 
 #ifdef __linux__
@@ -82,6 +88,8 @@ static void *mmap_framebuffer(size_t *fbsize)
 static double bandwidth_bench_helper(int64_t *dstbuf, int64_t *srcbuf,
                                      int64_t *tmpbuf,
                                      int size, int blocksize,
+                                     void *poolbuf, int mem_realloc,
+                                     int minrepeats, int maxrepeats,
                                      const char *indent_prefix,
                                      int use_tmpbuf,
                                      void (*f)(int64_t *, int64_t *, int),
@@ -92,10 +100,10 @@ static double bandwidth_bench_helper(int64_t *dstbuf, int64_t *srcbuf,
     double speed, maxspeed;
     double s, s0, s1, s2;
 
-    /* do up to MAXREPEATS measurements */
+    /* do up to maxrepeats measurements */
     s = s0 = s1 = s2 = 0;
     maxspeed   = 0;
-    for (n = 0; n < MAXREPEATS; n++)
+    for (n = 0; n < maxrepeats; n++)
     {
         f(dstbuf, srcbuf, size);
         loopcount = 0;
@@ -134,11 +142,19 @@ static double bandwidth_bench_helper(int64_t *dstbuf, int64_t *srcbuf,
         if (speed > maxspeed)
             maxspeed = speed;
 
-        if (s0 > MINREPEATS - 1)
+        if (s0 > minrepeats - 1)
         {
             s = sqrt((s0 * s2 - s1 * s1) / (s0 * (s0 - 1)));
             if (s < maxspeed / 1000.)
                 break;
+        }
+        if (mem_realloc)
+        {
+            free(poolbuf);
+            poolbuf = alloc_four_nonaliased_buffers((void **)&srcbuf, size,
+                                                    (void **)&dstbuf, size,
+                                                    (void **)&tmpbuf, blocksize,
+                                                    NULL, 0);
         }
     }
 
@@ -190,12 +206,14 @@ static bench_info libc_benchmarks[] =
 };
 
 void bandwidth_bench(int64_t *dstbuf, int64_t *srcbuf, int64_t *tmpbuf,
-                     int size, int blocksize, const char *indent_prefix,
-                     bench_info *bi)
+                     int size, int blocksize, void *poolbuf, int mem_realloc, int minrepeats, int maxrepeats,
+                     const char *indent_prefix, bench_info *bi)
 {
     while (bi->f)
     {
         bandwidth_bench_helper(dstbuf, srcbuf, tmpbuf, size, blocksize,
+                               poolbuf, mem_realloc,
+                               minrepeats, maxrepeats,
                                indent_prefix, bi->use_tmpbuf,
                                bi->f,
                                bi->description);
@@ -378,7 +396,7 @@ static uint32_t rand32()
     return (hi << 16) + lo;
 }
 
-int latency_bench(int size, int count, int use_hugepage)
+int latency_bench(int size, int count, int repeats, int use_hugepage)
 {
     double t, t2, t_before, t_after, t_noaccess, t_noaccess2;
     double xs, xs0, xs1, xs2;
@@ -406,7 +424,7 @@ int latency_bench(int size, int count, int use_hugepage)
 #endif
     memset(buffer, 0, size);
 
-    for (n = 1; n <= MAXREPEATS; n++)
+    for (n = 1; n <= repeats; n++)
     {
         t_before = gettime();
         random_read_test(buffer, count, 1);
@@ -433,7 +451,7 @@ int latency_bench(int size, int count, int use_hugepage)
     {
         int testsize = 1 << nbits;
         xs1 = xs2 = ys = ys1 = ys2 = 0;
-        for (n = 1; n <= MAXREPEATS; n++)
+        for (n = 1; n <= repeats; n++)
         {
             /*
              * Select a random offset in order to mitigate the unpredictability
@@ -483,9 +501,13 @@ int latency_bench(int size, int count, int use_hugepage)
     return 1;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
     int latbench_size = SIZE * 2, latbench_count = LATBENCH_COUNT;
+    int minrepeats = MINREPEATS;
+    int maxrepeats = MAXREPEATS;
+    int mem_realloc = MEM_REALLOC;
+    int latbench_repeats = LATBENCH_REPEATS;
     int64_t *srcbuf, *dstbuf, *tmpbuf;
     void *poolbuf;
     size_t bufsize = SIZE;
@@ -498,9 +520,11 @@ int main(void)
     printf("tinymembench v" VERSION " (simple benchmark for memory throughput and latency)\n");
     printf("\n");
     printf("CFLAGS: " CFLAGS "\n");
-    printf("MINREPEATS: %d\n", MINREPEATS);
-    printf("MAXREPEATS: %d\n", MAXREPEATS);
-    printf("LATBENCH_COUNT: %d\n", LATBENCH_COUNT);
+    printf("bandwidth test min repeats: %d\n", minrepeats);
+    printf("bandwidth test max repeats: %d\n", maxrepeats);
+    printf("bandwidth test mem realloc: %s\n", mem_realloc ? "yes" : "no");
+    printf("      latency test repeats: %d\n", latbench_repeats);
+    printf("        latency test count: %d\n", latbench_count);
 
 
     poolbuf = alloc_four_nonaliased_buffers((void **)&srcbuf, bufsize,
@@ -524,13 +548,13 @@ int main(void)
     printf("==         brackets                                                     ==\n");
     printf("==========================================================================\n\n");
 
-    bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, BLOCKSIZE, " ", c_benchmarks);
+    bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, BLOCKSIZE, poolbuf, mem_realloc, minrepeats, maxrepeats, " ", c_benchmarks);
     printf(" ---\n");
-    bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, BLOCKSIZE, " ", libc_benchmarks);
+    bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, BLOCKSIZE, poolbuf, mem_realloc, minrepeats, maxrepeats, " ", libc_benchmarks);
     bench_info *bi = get_asm_benchmarks();
     if (bi->f) {
         printf(" ---\n");
-        bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, BLOCKSIZE, " ", bi);
+        bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, BLOCKSIZE, poolbuf, mem_realloc, minrepeats, maxrepeats, " ", bi);
     }
 
 #ifdef __linux__
@@ -561,7 +585,7 @@ int main(void)
         srcbuf = fbbuf;
         if (bufsize > fbsize)
             bufsize = fbsize;
-        bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, BLOCKSIZE, " ", bi);
+        bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, BLOCKSIZE, poolbuf, mem_realloc, minrepeats, maxrepeats, " ", bi);
     }
 #endif
 
@@ -589,10 +613,10 @@ int main(void)
     printf("==         single reads performed one after another.                    ==\n");
     printf("==========================================================================\n");
 
-    if (!latency_bench(latbench_size, latbench_count, -1) ||
-        !latency_bench(latbench_size, latbench_count, 1))
+    if (!latency_bench(latbench_size, latbench_count, latbench_repeats, -1) ||
+        !latency_bench(latbench_size, latbench_count, latbench_repeats, 1))
     {
-        latency_bench(latbench_size, latbench_count, 0);
+        latency_bench(latbench_size, latbench_count, latbench_repeats, 0);
     }
 
     return 0;

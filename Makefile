@@ -6,13 +6,17 @@ endif
 
 MINREPEATS ?= 3
 MAXREPEATS ?= 10
+LATBENCH_REPEATS ?= 10
 LATBENCH_COUNT ?= 10000000
+MEM_REALLOC ?= 0
 
 tinymembench: main.c util.o util.h asm-opt.h version.h asm-opt.o x86-sse2.o arm-neon.o mips-32.o aarch64-asm.o
 	${CC} -O2 ${CFLAGS} "-DCFLAGS=\"${CFLAGS}\"" \
 		-DMINREPEATS=${MINREPEATS} \
 		-DMAXREPEATS=${MAXREPEATS} \
+		-DLATBENCH_REPEATS=${LATBENCH_REPEATS} \
 		-DLATBENCH_COUNT=${LATBENCH_COUNT} \
+		-DMEM_REALLOC=${MEM_REALLOC} \
 		-o tinymembench main.c util.o asm-opt.o x86-sse2.o arm-neon.o mips-32.o aarch64-asm.o -lm
 
 util.o: util.c util.h
