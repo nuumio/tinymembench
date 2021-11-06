@@ -45,6 +45,9 @@
 #ifndef MAXREPEATS
 # define MAXREPEATS      10
 #endif
+#ifndef MINREPEATS
+# define MINREPEATS      3
+#endif
 #ifndef LATBENCH_COUNT
 # define LATBENCH_COUNT  10000000
 #endif
@@ -131,7 +134,7 @@ static double bandwidth_bench_helper(int64_t *dstbuf, int64_t *srcbuf,
         if (speed > maxspeed)
             maxspeed = speed;
 
-        if (s0 > 2)
+        if (s0 > MINREPEATS - 1)
         {
             s = sqrt((s0 * s2 - s1 * s1) / (s0 * (s0 - 1)));
             if (s < maxspeed / 1000.)
@@ -141,12 +144,12 @@ static double bandwidth_bench_helper(int64_t *dstbuf, int64_t *srcbuf,
 
     if (maxspeed > 0 && s / maxspeed * 100. >= 0.1)
     {
-        printf("%s%-52s : %8.1f MB/s (%.1f%%)\n", indent_prefix, description,
-                                               maxspeed, s / maxspeed * 100.);
+        printf("%s%-48s : %8.1f MB/s (%.f, %.1f%%)\n", indent_prefix, description,
+                                               maxspeed, s0, s / maxspeed * 100.);
     }
     else
     {
-        printf("%s%-52s : %8.1f MB/s\n", indent_prefix, description, maxspeed);
+        printf("%s%-48s : %8.1f MB/s (%.f)\n", indent_prefix, description, maxspeed, s0);
     }
     return maxspeed;
 }
@@ -493,6 +496,7 @@ int main(void)
 #endif
 
     printf("tinymembench v" VERSION " (simple benchmark for memory throughput and latency)\n");
+    printf("CFLAGS: " CFLAGS "\n");
 
 
     poolbuf = alloc_four_nonaliased_buffers((void **)&srcbuf, bufsize,
@@ -504,13 +508,15 @@ int main(void)
     printf("== Memory bandwidth tests                                               ==\n");
     printf("==                                                                      ==\n");
     printf("== Note 1: 1MB = 1000000 bytes                                          ==\n");
-    printf("== Note 2: Results for 'copy' tests show how many bytes can be          ==\n");
+    printf("== Note 2: Test result is the best of repeated runs. Number of repeats  ==\n");
+    printf("==         is shown in brackets                                         ==\n");
+    printf("== Note 3: Results for 'copy' tests show how many bytes can be          ==\n");
     printf("==         copied per second (adding together read and writen           ==\n");
     printf("==         bytes would have provided twice higher numbers)              ==\n");
-    printf("== Note 3: 2-pass copy means that we are using a small temporary buffer ==\n");
+    printf("== Note 4: 2-pass copy means that we are using a small temporary buffer ==\n");
     printf("==         to first fetch data into it, and only then write it to the   ==\n");
     printf("==         destination (source -> L1 cache, L1 cache -> destination)    ==\n");
-    printf("== Note 4: If sample standard deviation exceeds 0.1%%, it is shown in    ==\n");
+    printf("== Note 5: If sample standard deviation exceeds 0.1%%, it is shown in    ==\n");
     printf("==         brackets                                                     ==\n");
     printf("==========================================================================\n\n");
 
