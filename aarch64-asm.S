@@ -140,7 +140,7 @@ asm_function aligned_block_load_ldp_x_aarch64
     ret
 .endfunc
 
-asm_function aligned_block_fill_ldp_q_aarch64
+asm_function aligned_block_load_ldp_q_aarch64
 0:
     prfm        pldl1keep, [SRC, #(PREFETCH_DISTANCE)]
     ldp         q0,  q1, [SRC, #(0 * 32)]
@@ -151,7 +151,7 @@ asm_function aligned_block_fill_ldp_q_aarch64
     ret
 .endfunc
 
-asm_function aligned_block_fill_ldnp_x_aarch64
+asm_function aligned_block_load_ldnp_x_aarch64
 0:
     ldnp        x3,  x4, [SRC, #(0 * 16)]
     ldnp        x5,  x6, [SRC, #(1 * 16)]
@@ -163,7 +163,7 @@ asm_function aligned_block_fill_ldnp_x_aarch64
     ret
 .endfunc
 
-asm_function aligned_block_fill_ldnp_q_aarch64
+asm_function aligned_block_load_ldnp_q_aarch64
 0:
     ldnp        q0,  q1, [SRC, #(0 * 32)]
     ldnp        q2,  q3, [SRC, #(1 * 32)]

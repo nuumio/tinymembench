@@ -67,6 +67,20 @@ void aligned_block_fill_stnp_q_aarch64(int64_t * __restrict dst,
                                        int64_t * __restrict src,
                                        int                  size);
 
+void aligned_block_load_ldp_x_aarch64(int64_t * __restrict dst,
+                                      int64_t * __restrict src,
+                                      int                  size);
+void aligned_block_load_ldp_q_aarch64(int64_t * __restrict dst,
+                                      int64_t * __restrict src,
+                                      int                  size);
+
+void aligned_block_load_ldnp_x_aarch64(int64_t * __restrict dst,
+                                       int64_t * __restrict src,
+                                       int                  size);
+void aligned_block_load_ldnp_q_aarch64(int64_t * __restrict dst,
+                                       int64_t * __restrict src,
+                                       int                  size);
+
 #ifdef __cplusplus
 }
 #endif
