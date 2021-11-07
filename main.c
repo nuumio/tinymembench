@@ -642,7 +642,7 @@ int main(int argc, char **argv)
         srcbuf = fbbuf;
         if (bufsize > fbsize)
             bufsize = fbsize;
-        bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, BLOCKSIZE, poolbuf, mem_realloc, minrepeats, maxrepeats, " ", bi);
+        bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, BLOCKSIZE, poolbuf, 0, minrepeats, maxrepeats, " ", bi);
     }
 #endif
 
