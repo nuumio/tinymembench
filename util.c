@@ -300,6 +300,69 @@ void aligned_block_fill_shuffle64(int64_t * __restrict dst_,
     }
 }
 
+void aligned_block_scan_8(int64_t * __restrict dst_,
+                          int64_t * __restrict src,
+                          int                  size)
+{
+    volatile int8_t *dst = (int8_t *)dst_;
+    int8_t *data = (int8_t *)src;
+    /* NOTE: Not exactly same semantics as memchr: we won't return NULL if not found. */
+    while ((size -= 1) >= 0 && *data != SEARCH_BYTE)
+    {
+        data += 1;
+    }
+    /* assignment is to prevent compiler optimizing this away */
+    ((void**)dst)[0] = (void*)data;
+}
+
+void aligned_block_scan_16(int64_t * __restrict dst_,
+                           int64_t * __restrict src,
+                           int                  size)
+{
+    volatile int16_t *dst = (int16_t *)dst_;
+    int16_t *data = (int16_t *)src;
+    /* NOTE: Not exactly same semantics as memchr: we stop at first non-filler
+             value and won't return NULL if not found. */
+    while ((size -= 2) >= 0 && *data == FILL_INT16)
+    {
+        data += 1;
+    }
+    /* assignment is to prevent compiler optimizing this away */
+    ((void**)dst)[0] = (void*)data;
+}
+
+void aligned_block_scan_32(int64_t * __restrict dst_,
+                           int64_t * __restrict src,
+                           int                  size)
+{
+    volatile int32_t *dst = (int32_t *)dst_;
+    int32_t *data = (int32_t *)src;
+    /* NOTE: Not exactly same semantics as memchr: we stop at first non-filler
+             value and won't return NULL if not found. */
+    while ((size -= 4) >= 0 && *data == FILL_INT32)
+    {
+        data += 1;
+    }
+    /* assignment is to prevent compiler optimizing this away */
+    ((void**)dst)[0] = (void*)data;
+}
+
+void aligned_block_scan_64(int64_t * __restrict dst_,
+                           int64_t * __restrict src,
+                           int                  size)
+{
+    volatile int64_t *dst = dst_;
+    int64_t *data = src;
+    /* NOTE: Not exactly same semantics as memchr: we stop at first non-filler
+             value and won't return NULL if not found. */
+    while ((size -= 8) >= 0 && *data == FILL_INT64)
+    {
+        data += 1;
+    }
+    /* assignment is to prevent compiler optimizing this away */
+    ((void**)dst)[0] = (void*)data;
+}
+
 double gettime(void)
 {
     struct timespec tp;
@@ -342,7 +405,7 @@ void *alloc_four_nonaliased_buffers(void **buf1_, int size1,
 
     ptr = buf = 
         (char *)malloc(size1 + size2 + size3 + size4 + 9 * ALIGN_PADDING);
-    memset(buf, 0xCC, size1 + size2 + size3 + size4 + 9 * ALIGN_PADDING);
+    memset(buf, FILL_BYTE, size1 + size2 + size3 + size4 + 9 * ALIGN_PADDING);
 
     ptr = align_up(ptr, ALIGN_PADDING);
     if (buf1)

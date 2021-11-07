@@ -31,6 +31,8 @@ typedef struct
     const char *description;
     int use_tmpbuf;
     void (*f)(int64_t *, int64_t *, int);
+    void (*setup)(int64_t *, int64_t *, int);
+    void (*teardown)(int64_t *, int64_t *, int);
 } bench_info;
 
 bench_info *get_asm_benchmarks(void);

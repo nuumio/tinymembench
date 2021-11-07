@@ -93,6 +93,8 @@ static double bandwidth_bench_helper(int64_t *dstbuf, int64_t *srcbuf,
                                      const char *indent_prefix,
                                      int use_tmpbuf,
                                      void (*f)(int64_t *, int64_t *, int),
+                                     void (*setup)(int64_t *, int64_t *, int),
+                                     void (*teardown)(int64_t *, int64_t *, int),
                                      const char *description)
 {
     int i, j, loopcount, innerloopcount, n;
@@ -103,6 +105,10 @@ static double bandwidth_bench_helper(int64_t *dstbuf, int64_t *srcbuf,
     /* do up to maxrepeats measurements */
     s = s0 = s1 = s2 = 0;
     maxspeed   = 0;
+    if (setup)
+    {
+        setup(dstbuf, srcbuf, size);
+    }
     for (n = 0; n < maxrepeats; n++)
     {
         f(dstbuf, srcbuf, size);
@@ -157,6 +163,10 @@ static double bandwidth_bench_helper(int64_t *dstbuf, int64_t *srcbuf,
                                                     NULL, 0);
         }
     }
+    if (teardown)
+    {
+        teardown(dstbuf, srcbuf, size);
+    }
 
     if (maxspeed > 0 && s / maxspeed * 100. >= 0.1)
     {
@@ -175,9 +185,36 @@ void memcpy_wrapper(int64_t *dst, int64_t *src, int size)
     memcpy(dst, src, size);
 }
 
+void memchr_wrapper(int64_t *dst, int64_t *src, int size)
+{
+    /* assignment is to prevent compiler optimizing this away */
+    ((void **)dst)[0] = memchr(src, SEARCH_BYTE, size);
+}
+
+#ifdef _GNU_SOURCE
+void rawmemchr_wrapper(int64_t *dst, int64_t *src, int size)
+{
+    /* assignment is to prevent compiler optimizing this away */
+    ((void **)dst)[0] = rawmemchr(src, SEARCH_BYTE);
+}
+#endif
+
 void memset_wrapper(int64_t *dst, int64_t *src, int size)
 {
     memset(dst, src[0], size);
+}
+
+void memscan_reset(int64_t *dst, int64_t *src, int size)
+{
+    memset(src, FILL_BYTE, size);
+    memset(dst, FILL_BYTE, size);
+}
+
+void memscan_setup(int64_t *dst, int64_t *src, int size)
+{
+    memscan_reset(dst, src, size);
+    /* Set last byte to SEARCH_BYTE. rawmemchr _needs_ this! */
+    ((int8_t*)src)[size - 1] = SEARCH_BYTE;
 }
 
 static bench_info c_benchmarks[] =
@@ -191,6 +228,10 @@ static bench_info c_benchmarks[] =
     { "C 2-pass copy", 1, aligned_block_copy },
     { "C 2-pass copy prefetched (32 bytes step)", 1, aligned_block_copy_pf32 },
     { "C 2-pass copy prefetched (64 bytes step)", 1, aligned_block_copy_pf64 },
+    { "C scan 8", 0, aligned_block_scan_8, memscan_setup, memscan_reset },
+    { "C scan 16", 0, aligned_block_scan_16, memscan_setup, memscan_reset },
+    { "C scan 32", 0, aligned_block_scan_32, memscan_setup, memscan_reset },
+    { "C scan 64", 0, aligned_block_scan_64 , memscan_setup, memscan_reset},
     { "C fill", 0, aligned_block_fill },
     { "C fill (shuffle within 16 byte blocks)", 0, aligned_block_fill_shuffle16 },
     { "C fill (shuffle within 32 byte blocks)", 0, aligned_block_fill_shuffle32 },
@@ -200,8 +241,12 @@ static bench_info c_benchmarks[] =
 
 static bench_info libc_benchmarks[] =
 {
-    { "standard memcpy", 0, memcpy_wrapper },
-    { "standard memset", 0, memset_wrapper },
+    { "libc memcpy copy", 0, memcpy_wrapper },
+    { "libc memchr scan", 0, memchr_wrapper, memscan_setup, memscan_reset },
+#ifdef _GNU_SOURCE
+    { "libc rawmemchr scan", 0, rawmemchr_wrapper, memscan_setup, memscan_reset },
+#endif
+    { "libc memset fill", 0, memset_wrapper },
     { NULL, 0, NULL }
 };
 
@@ -216,6 +261,8 @@ void bandwidth_bench(int64_t *dstbuf, int64_t *srcbuf, int64_t *tmpbuf,
                                minrepeats, maxrepeats,
                                indent_prefix, bi->use_tmpbuf,
                                bi->f,
+                               bi->setup,
+                               bi->teardown,
                                bi->description);
         bi++;
     }

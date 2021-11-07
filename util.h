@@ -26,6 +26,12 @@
 
 #include <stdint.h>
 
+#define FILL_BYTE   0xcc
+#define FILL_INT16  0xcccc
+#define FILL_INT32  0xcccccccc
+#define FILL_INT64  0xcccccccccccccccc
+#define SEARCH_BYTE 0x55
+
 void parse_args(int argc, char **argv,
                 int *minrepeats, int *maxrepeats, int *mem_realloc,
                 int *latbench_repeats, int *latbench_count);
@@ -65,6 +71,19 @@ void aligned_block_fill_shuffle32(int64_t * __restrict dst,
 void aligned_block_fill_shuffle64(int64_t * __restrict dst,
                                   int64_t * __restrict src,
                                   int                  size);
+
+void aligned_block_scan_8(int64_t * __restrict dst_,
+                          int64_t * __restrict src,
+                          int                  size);
+void aligned_block_scan_16(int64_t * __restrict dst_,
+                           int64_t * __restrict src,
+                           int                  size);
+void aligned_block_scan_32(int64_t * __restrict dst_,
+                           int64_t * __restrict src,
+                           int                  size);
+void aligned_block_scan_64(int64_t * __restrict dst_,
+                           int64_t * __restrict src,
+                           int                  size);
 
 void *alloc_four_nonaliased_buffers(void **buf1, int size1,
                                     void **buf2, int size2,
