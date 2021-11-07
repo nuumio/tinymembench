@@ -304,10 +304,10 @@ void aligned_block_scan_8(int64_t * __restrict dst_,
                           int64_t * __restrict src,
                           int                  size)
 {
-    volatile int8_t *dst = (int8_t *)dst_;
-    int8_t *data = (int8_t *)src;
+    volatile uint8_t *dst = (uint8_t *)dst_;
+    uint8_t *data = (uint8_t *)src;
     /* NOTE: Not exactly same semantics as memchr: we won't return NULL if not found. */
-    while ((size -= 1) >= 0 && *data != SEARCH_BYTE)
+    while ((size -= 1) >= 0 && *data != SEARCH_8)
     {
         data += 1;
     }
@@ -319,11 +319,11 @@ void aligned_block_scan_16(int64_t * __restrict dst_,
                            int64_t * __restrict src,
                            int                  size)
 {
-    volatile int16_t *dst = (int16_t *)dst_;
-    int16_t *data = (int16_t *)src;
+    volatile uint16_t *dst = (uint16_t *)dst_;
+    uint16_t *data = (uint16_t *)src;
     /* NOTE: Not exactly same semantics as memchr: we stop at first non-filler
              value and won't return NULL if not found. */
-    while ((size -= 2) >= 0 && *data == FILL_INT16)
+    while ((size -= 2) >= 0 && *data == FILL_16)
     {
         data += 1;
     }
@@ -335,11 +335,11 @@ void aligned_block_scan_32(int64_t * __restrict dst_,
                            int64_t * __restrict src,
                            int                  size)
 {
-    volatile int32_t *dst = (int32_t *)dst_;
-    int32_t *data = (int32_t *)src;
+    volatile uint32_t *dst = (uint32_t *)dst_;
+    uint32_t *data = (uint32_t *)src;
     /* NOTE: Not exactly same semantics as memchr: we stop at first non-filler
              value and won't return NULL if not found. */
-    while ((size -= 4) >= 0 && *data == FILL_INT32)
+    while ((size -= 4) >= 0 && *data == FILL_32)
     {
         data += 1;
     }
@@ -351,11 +351,11 @@ void aligned_block_scan_64(int64_t * __restrict dst_,
                            int64_t * __restrict src,
                            int                  size)
 {
-    volatile int64_t *dst = dst_;
-    int64_t *data = src;
+    volatile uint64_t *dst = (uint64_t *)dst_;
+    uint64_t *data = (uint64_t *)src;
     /* NOTE: Not exactly same semantics as memchr: we stop at first non-filler
              value and won't return NULL if not found. */
-    while ((size -= 8) >= 0 && *data == FILL_INT64)
+    while ((size -= 8) >= 0 && *data == FILL_64)
     {
         data += 1;
     }
@@ -405,7 +405,7 @@ void *alloc_four_nonaliased_buffers(void **buf1_, int size1,
 
     ptr = buf = 
         (char *)malloc(size1 + size2 + size3 + size4 + 9 * ALIGN_PADDING);
-    memset(buf, FILL_BYTE, size1 + size2 + size3 + size4 + 9 * ALIGN_PADDING);
+    memset(buf, FILL_8, size1 + size2 + size3 + size4 + 9 * ALIGN_PADDING);
 
     ptr = align_up(ptr, ALIGN_PADDING);
     if (buf1)

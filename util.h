@@ -26,11 +26,11 @@
 
 #include <stdint.h>
 
-#define FILL_BYTE   0xcc
-#define FILL_INT16  0xcccc
-#define FILL_INT32  0xcccccccc
-#define FILL_INT64  0xcccccccccccccccc
-#define SEARCH_BYTE 0x55
+#define FILL_8   0xcc
+#define FILL_16  0xcccc
+#define FILL_32  0xcccccccc
+#define FILL_64  0xcccccccccccccccc
+#define SEARCH_8 0x55
 
 void parse_args(int argc, char **argv,
                 int *minrepeats, int *maxrepeats, int *mem_realloc,

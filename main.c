@@ -188,14 +188,14 @@ void memcpy_wrapper(int64_t *dst, int64_t *src, int size)
 void memchr_wrapper(int64_t *dst, int64_t *src, int size)
 {
     /* assignment is to prevent compiler optimizing this away */
-    ((void **)dst)[0] = memchr(src, SEARCH_BYTE, size);
+    ((void **)dst)[0] = memchr(src, SEARCH_8, size);
 }
 
 #ifdef _GNU_SOURCE
 void rawmemchr_wrapper(int64_t *dst, int64_t *src, int size)
 {
     /* assignment is to prevent compiler optimizing this away */
-    ((void **)dst)[0] = rawmemchr(src, SEARCH_BYTE);
+    ((void **)dst)[0] = rawmemchr(src, SEARCH_8);
 }
 #endif
 
@@ -206,15 +206,15 @@ void memset_wrapper(int64_t *dst, int64_t *src, int size)
 
 void memscan_reset(int64_t *dst, int64_t *src, int size)
 {
-    memset(src, FILL_BYTE, size);
-    memset(dst, FILL_BYTE, size);
+    memset(src, FILL_8, size);
+    memset(dst, FILL_8, size);
 }
 
 void memscan_setup(int64_t *dst, int64_t *src, int size)
 {
     memscan_reset(dst, src, size);
-    /* Set last byte to SEARCH_BYTE. rawmemchr _needs_ this! */
-    ((int8_t*)src)[size - 1] = SEARCH_BYTE;
+    /* Set last byte to SEARCH_8. rawmemchr _needs_ this! */
+    ((uint8_t*)src)[size - 1] = SEARCH_8;
 }
 
 static bench_info c_benchmarks[] =
