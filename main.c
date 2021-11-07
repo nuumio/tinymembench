@@ -161,6 +161,10 @@ static double bandwidth_bench_helper(int64_t *dstbuf, int64_t *srcbuf,
                                                     (void **)&dstbuf, size,
                                                     (void **)&tmpbuf, blocksize,
                                                     NULL, 0);
+            if (setup)
+            {
+                setup(dstbuf, srcbuf, size);
+            }
         }
     }
     if (teardown)
